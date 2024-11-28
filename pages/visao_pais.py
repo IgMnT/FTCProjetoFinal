@@ -1,0 +1,164 @@
+#=======================================
+#Bibliotecas
+#=======================================
+
+from haversine import haversine 
+import plotly.express as px
+import plotly.graph_objects as go
+import pandas as pd
+import streamlit as st
+from datetime import datetime 
+from PIL import Image
+import plotly.express as px
+import folium
+from streamlit_folium import folium_static
+
+#Inicialização do dataframe
+df = pd.read_csv('../dataset/zomato.csv')
+df1 = df
+
+df1['Price range'] = df1['Price range'].astype(int)
+df1['Country Code'] = df1['Country Code'].astype(int)
+df1['Votes'] = df1['Votes'].astype(int)
+df1.loc[df1['Has Table booking'] == 1, 'Has Table booking'] = True
+df1.loc[df1['Has Table booking'] == 0, 'Has Table booking'] = False
+
+#=======================================
+#Funções
+#=======================================
+
+
+
+
+
+COUNTRIES = {
+1: "India",
+14: "Australia",
+30: "Brazil",
+37: "Canada",
+94: "Indonesia",
+148: "New Zeland",
+162: "Philippines",
+166: "Qatar",
+184: "Singapure",
+189: "South Africa",
+191: "Sri Lanka",
+208: "Turkey",
+214: "United Arab Emirates",
+215: "England",
+216: "United States of America",
+}
+def country_name(country_id):
+    return COUNTRIES[country_id]
+
+
+
+
+def pais_top(df1,col):
+    linha = df.loc[df[col].idxmax()]
+    pais_code = linha['Country Code']
+    pais = country_name(pais_code)
+    return pais
+
+def nivel_preco(df1):
+    code = df1.loc[df1['Price range'] == 4, 'Country Code'].value_counts().idxmax()
+    pais = country_name(code)
+    return pais
+
+def cuisines(df1):
+    culinarias_distintas = df.groupby('Country Code')['Cuisines'].nunique()
+    pais_mais_diverso = culinarias_distintas.idxmax()
+    pais = country_name(pais_mais_diverso)
+    return pais
+
+def entregas_reservas(df1,col):
+    code = df1.loc[df1[col] == True, 'Country Code'].value_counts().idxmax()
+    pais = country_name(code)
+    return pais
+  
+
+
+
+#=======================================
+#Barra Lateral
+#=======================================
+
+image_path = '../images.png'
+image = Image.open(image_path)
+
+st.sidebar.image(image, width=120)
+
+st.sidebar.markdown('# Fome Zero')
+st.sidebar.markdown('## Filtros')
+
+country = st.sidebar.multiselect(
+    'Escolha os países que deseja visualizar os restaurantes:',
+    [''],
+    default=['']
+)
+
+#linhas_selecionadas = df1['Country Code'].isin(country)
+#df1 = df1.loc[linhas_selecionadas, :]
+
+
+
+#=======================================
+#Layout
+#=======================================
+
+st.header('Visão País')
+
+with st.container():
+    col1,col2 = st.columns(2)
+    
+    with col1:
+        st.markdown('### País com maior quantidade de cidades registradas')
+        col = 'City'
+        pais = pais_top(df1,col)
+        st.subheader(pais)
+    with col2:
+        st.markdown('### País com maior quantidade de restaurantes cadastrados')
+        col = 'Restaurant ID'
+        pais = pais_top(df1,col)
+        st.subheader(pais)
+
+with st.container():
+    st.markdown('### país que possui mais restaurantes com o nível de preço igual a 4 registrados')
+    pais = nivel_preco(df1)
+    st.subheader(pais)
+
+with st.container():
+    col1,col2 = st.columns(2)
+    with col1:
+        st.markdown('### País com maior quantidade de culinarias distintas')
+        col = 'Cuisines'
+        pais = cuisines(df1)
+        st.subheader(pais)
+    with col2:
+        st.markdown('### País com maior quantidade de avaliações registradas')
+        col = 'Votes'
+        pais = pais_top(df1,col)
+        st.subheader(pais)
+
+with st.container():
+    col1,col2 = st.columns(2)
+    with col1:
+        st.markdown('### País com maior quantidade de restaurantes com entregas')
+        col = 'Has Online delivery'
+        pais = entregas_reservas(df1,col)
+        st.subheader(pais)
+    with col2:
+        st.markdown('### País com maior quantidade de restaurantes com reservas')
+        col = 'Has Table booking'
+        pais = entregas_reservas(df1,col)
+        st.subheader(pais)
+with
+    
+   
+
+
+
+    
+    
+
+
