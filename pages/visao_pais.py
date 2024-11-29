@@ -76,6 +76,19 @@ def entregas_reservas(df1,col):
     pais = country_name(code)
     return pais
   
+def media_avaliacoes(df1, col, func):
+    media = df1.groupby('Country Code')[col].mean()
+    country_id = media.idxmax() if func == pd.Series.idxmax else media.idxmin()
+    return country_name(country_id)
+
+def prato_pais(df1):
+    preco_medio = df1.groupby('Country Code')['Average Cost for two'].mean()
+    visao = preco_medio.reset_index(name='Preco médio')
+    visao['Country Code'] = visao['Country Code'].apply(country_name)
+    visao = visao.rename(columns={'Country Code': 'País'})
+    return visao
+
+
 
 
 
@@ -152,8 +165,31 @@ with st.container():
         col = 'Has Table booking'
         pais = entregas_reservas(df1,col)
         st.subheader(pais)
-with
+with st.container():
+    col1,col2,col3 = st.columns(3)
+    with col1:
+        st.markdown('### País com maior quantidade média de avaliações:')
+        col = 'Votes'
+        pais = media_avaliacoes(df1,col,pd.Series.idxmax)
+        st.subheader(pais)
+    with col2:
+        st.markdown('### País com maior média de nota:')
+        col = 'Aggregate rating'
+        pais = media_avaliacoes(df1,col,pd.Series.idxmax)
+        st.subheader(pais)
+    with col3:
+        st.markdown('### País com menor média de nota:')   
+        col = 'Aggregate rating'
+        pais = media_avaliacoes(df1,col,pd.Series.idxmin)
+        st.subheader(pais)
+with st.container():
+    st.markdown('### Média de preço de prato para dois p/ país:')
+    visao = prato_pais(df1)
+    st.dataframe(visao)
+
+
     
+
    
 
 
