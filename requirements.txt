@@ -1,0 +1,8 @@
+pandas
+streamlit
+datetime
+plotly
+folium
+streamlit-folium
+PIL
+inflection

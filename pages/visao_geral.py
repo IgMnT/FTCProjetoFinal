@@ -13,32 +13,48 @@ import plotly.express as px
 import folium
 from streamlit_folium import folium_static
 
-#Inicialização do dataframe
-df = pd.read_csv('../dataset/zomato.csv')
-df1 = df
+
 
 #=======================================
 #Funções
 #=======================================
 
+def rename_columns(df):
+    df = df.copy()
+    title = lambda x: inflection.titleize(x)
+    snakecase = lambda x: inflection.underscore(x)
+    spaces = lambda x: x.replace(" ", "")
+    cols_old = list(df.columns)
+    cols_old = list(map(title, cols_old))
+    cols_old = list(map(spaces, cols_old))
+    cols_new = list(map(snakecase, cols_old))
+    df.columns = cols_new
+    return df
+
+#Inicialização do dataframe
+df = pd.read_csv('../dataset/zomato.csv')
+df1 = rename_columns(df)    
+
+
+
 def restaurantes_unicos(df1):
-    restaurantes_unicos = df1.loc[:, 'Restaurant ID'].nunique()
+    restaurantes_unicos = df1.loc[:, 'restaurant_id'].nunique()
     return restaurantes_unicos
 
 def paises_unicos(df1):
-    paises_unicos = df1.loc[:, 'Country Code'].nunique()
+    paises_unicos = df1.loc[:, 'country_code'].nunique()
     return paises_unicos
 
 def cidades_unicas(df1):
-    cidades_unicas = df1.loc[:, 'City'].nunique()
+    cidades_unicas = df1.loc[:, 'city'].nunique()
     return cidades_unicas
 
 def avaliacoes_unicas(df1):
-    avaliacoes_unicas = df1.loc[:, 'Votes'].nunique()
+    avaliacoes_unicas = df1.loc[:, 'votes'].nunique()
     return avaliacoes_unicas
 
 def tipos_culinaria_unicos(df1):
-    tipos_culinaria_unicos = df1.loc[:, 'Cuisines'].nunique()
+    tipos_culinaria_unicos = df1.loc[:, 'cuisines'].nunique()
     return tipos_culinaria_unicos
 
 
@@ -60,8 +76,9 @@ country = st.sidebar.multiselect(
     default=['']
 )
 
-#linhas_selecionadas = df1['Country Code'].isin(country)
+#linhas_selecionadas = df1['country_code'].isin(country)
 #df1 = df1.loc[linhas_selecionadas, :]
+
 
 #=======================================
 #Layout
