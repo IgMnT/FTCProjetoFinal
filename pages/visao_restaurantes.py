@@ -93,45 +93,49 @@ def restaurante_brasileiro_maior_nota_brazil(df1):
     return restaurante, nota
 
 def restaurante_pedido_online_avaliacoes_medias(df1):
-    # Agrupa por has_online_delivery e calcula as médias
-    comparison_df = df1.groupby('has_online_delivery').agg({
-        'votes': 'mean',
-        'aggregate_rating': 'mean',
-        'average_cost_for_two': 'mean'
-    }).reset_index()
+    comparison_dfx = df1.groupby('has_online_delivery')['votes'].mean().reset_index()
+    comparison_dfx.columns = ['Delivery Online', 'Média de Avaliações']
     
-    # Renomeia as colunas
-    comparison_df.columns = ['Delivery Online', 'Média de Avaliações', 'Nota Média', 'Preço Médio para Dois']
-    
-    # Substitui os valores booleanos por descrições
-    comparison_df['Delivery Online'] = comparison_df['Delivery Online'].map({
+    comparison_dfx['Delivery Online'] = comparison_dfx['Delivery Online'].map({
         1: 'Com Pedido Online',
         0: 'Sem Pedido Online'
     })
     
-    return comparison_df
-
+    return comparison_dfx
 
 def restaurante_reserva_valor_medio(df1):
-    # Calcula médias para restaurantes com pedido online
-    df_delivery = df1[df1['has_online_delivery'] == 1]
-    avg_votes_online = df_online.groupby('aggregate_rating')['votes'].mean().reset_index()
-    avg_votes_online = avg_votes_online.sort_values('votes', ascending=False).head(5)
-    avg_votes_online.columns = ['Nota', 'Média de Avaliações']
-    avg_votes_online['Tipo'] = 'Com Pedido Online'
+    # Restaurantes com reserva
+    df_com_reserva = df1[df1['has_table_booking'] == 1]
+    avg_price_com_reserva = df_com_reserva['average_cost_for_two'].mean()
     
-    # Calcula médias para restaurantes sem pedido online
-    df_offline = df1[df1['has_online_delivery'] == 0]
-    avg_votes_offline = df_offline.groupby('aggregate_rating')['votes'].mean().reset_index()
-    avg_votes_offline = avg_votes_offline.sort_values('votes', ascending=False).head(5)
-    avg_votes_offline.columns = ['Nota', 'Média de Avaliações']
-    avg_votes_offline['Tipo'] = 'Sem Pedido Online'
+    # Restaurantes sem reserva
+    df_sem_reserva = df1[df1['has_table_booking'] == 0]
+    avg_price_sem_reserva = df_sem_reserva['average_cost_for_two'].mean()
     
-    # Combina os dois dataframes
-    comparison_df = pd.concat([avg_votes_online, avg_votes_offline])
+    # Criando DataFrame com os resultados
+    comparison_df = pd.DataFrame({
+        'Reserva': ['Com Reserva', 'Sem Reserva'],
+        'Média de Preço para duas pessoas': [avg_price_com_reserva, avg_price_sem_reserva]
+    })
+    
     return comparison_df
 
-
+def restaurante_culinaria_japonesa_bbq(df1):
+    culinaria_japonesa = df1[
+        (df1['cuisines'] == 'Japanese') & 
+        (df1['country_code'] == 216)
+    ][['cuisines', 'average_cost_for_two']].copy()
+    
+    BBQ = df1[
+        (df1['cuisines'] == 'BBQ') & 
+        (df1['country_code'] == 216)
+    ][['cuisines', 'average_cost_for_two']].copy()
+    
+    culinaria_japonesa_media = culinaria_japonesa.groupby('cuisines')['average_cost_for_two'].mean().reset_index()
+    BBQ_media = BBQ.groupby('cuisines')['average_cost_for_two'].mean().reset_index()
+    media_total = pd.concat([culinaria_japonesa_media, BBQ_media]).reset_index(drop=True)
+    
+    return media_total
 
 #=======================================
 #Barra Lateral
@@ -196,10 +200,13 @@ with st.container():
     
     with col1:
         st.markdown('#### Os restaurantes que aceitam pedido online são também, na média, osrestaurantes que mais possuem avaliações registradas?')
-        comparison_df = restaurante_pedido_online_avaliacoes_medias(df1)
-        st.dataframe(comparison_df)
+        comparison_dfx = restaurante_pedido_online_avaliacoes_medias(df1)
+        st.dataframe(comparison_dfx)
     with col2:
-        st.markdown('#### ')
-
+        st.markdown('#### Os restaurantes que fazem reservas são também, na média, os restaurantes que possuem o maior valor médio de um prato para duas pessoas?')
+        comparison_df = restaurante_reserva_valor_medio(df1)
+        st.dataframe(comparison_df)
 with st.container():
-    st.markdown('#### ')
+    st.markdown('#### Os restaurantes do tipo de culinária japonesa dos Estados Unidos da América possuem um valor médio de prato para duas pessoas maior que as churrascarias americanas (BBQ)?')
+    media_total = restaurante_culinaria_japonesa_bbq(df1)
+    st.dataframe(media_total)
