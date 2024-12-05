@@ -15,7 +15,7 @@ from streamlit_folium import folium_static
 import inflection
 
 #=======================================
-#Funções
+#Funções
 #=======================================
 
 def rename_columns(df):
@@ -56,7 +56,7 @@ def rename_columns(df):
     
     return df
 
-df = pd.read_csv('../dataset/zomato.csv')
+df = pd.read_csv('dataset/zomato.csv')
 df1 = rename_columns(df)
 
 
@@ -93,55 +93,35 @@ def restaurante_brasileiro_maior_nota_brazil(df1):
     return restaurante, nota
 
 def restaurante_pedido_online_avaliacoes_medias(df1):
-    comparison_dfx = df1.groupby('has_online_delivery')['votes'].mean().reset_index()
-    comparison_dfx.columns = ['Delivery Online', 'Média de Avaliações']
-    
-    comparison_dfx['Delivery Online'] = comparison_dfx['Delivery Online'].map({
-        1: 'Com Pedido Online',
-        0: 'Sem Pedido Online'
-    })
-    
+    # Calcula a média de avaliações para restaurantes com e sem pedido online
+    comparison_dfx = df1.groupby('has_online_delivery')['aggregate_rating'].mean().reset_index()
+    comparison_dfx['has_online_delivery'] = comparison_dfx['has_online_delivery'].map({True: 'Com Delivery', False: 'Sem Delivery'})
+    comparison_dfx = comparison_dfx.rename(columns={'has_online_delivery': 'Tipo de Entrega', 'aggregate_rating': 'Média de Avaliações'})
     return comparison_dfx
 
 def restaurante_reserva_valor_medio(df1):
-    # Restaurantes com reserva
-    df_com_reserva = df1[df1['has_table_booking'] == 1]
-    avg_price_com_reserva = df_com_reserva['average_cost_for_two'].mean()
-    
-    # Restaurantes sem reserva
-    df_sem_reserva = df1[df1['has_table_booking'] == 0]
-    avg_price_sem_reserva = df_sem_reserva['average_cost_for_two'].mean()
-    
-    # Criando DataFrame com os resultados
-    comparison_df = pd.DataFrame({
-        'Reserva': ['Com Reserva', 'Sem Reserva'],
-        'Média de Preço para duas pessoas': [avg_price_com_reserva, avg_price_sem_reserva]
-    })
-    
+    # Calcula a média de preço para duas pessoas para restaurantes com e sem reserva
+    comparison_df = df1.groupby('has_table_booking')['average_cost_for_two'].mean().reset_index()
+    comparison_df['has_table_booking'] = comparison_df['has_table_booking'].map({True: 'Com Reserva', False: 'Sem Reserva'})
+    comparison_df = comparison_df.rename(columns={'has_table_booking': 'Tipo de Reserva', 'average_cost_for_two': 'Preço Médio'})
     return comparison_df
 
 def restaurante_culinaria_japonesa_bbq(df1):
-    culinaria_japonesa = df1[
-        (df1['cuisines'] == 'Japanese') & 
-        (df1['country_code'] == 216)
-    ][['cuisines', 'average_cost_for_two']].copy()
+    # Filtra apenas restaurantes dos EUA e com as culinárias de interesse
+    df_eua = df1[df1['country_code'] == 216]  # Código dos EUA
+    culinarias = ['Japanese', 'BBQ']
+    df_culinarias = df_eua[df_eua['cuisines'].isin(culinarias)]
     
-    BBQ = df1[
-        (df1['cuisines'] == 'BBQ') & 
-        (df1['country_code'] == 216)
-    ][['cuisines', 'average_cost_for_two']].copy()
-    
-    culinaria_japonesa_media = culinaria_japonesa.groupby('cuisines')['average_cost_for_two'].mean().reset_index()
-    BBQ_media = BBQ.groupby('cuisines')['average_cost_for_two'].mean().reset_index()
-    media_total = pd.concat([culinaria_japonesa_media, BBQ_media]).reset_index(drop=True)
-    
+    # Calcula a média de preço por tipo de culinária
+    media_total = df_culinarias.groupby('cuisines')['average_cost_for_two'].mean().reset_index()
+    media_total = media_total.rename(columns={'cuisines': 'Tipo de Culinária', 'average_cost_for_two': 'Preço Médio'})
     return media_total
 
 #=======================================
 #Barra Lateral
 #=======================================
 
-image_path = '../images.png'
+image_path = './images.png'
 image = Image.open(image_path)
 
 st.sidebar.image(image, width=120)
@@ -150,7 +130,7 @@ st.sidebar.markdown('# Fome Zero')
 st.sidebar.markdown('## Filtros')
 
 country = st.sidebar.multiselect(
-    'Escolha os países que deseja visualizar os restaurantes:',
+    'Escolha os países que deseja visualizar os restaurantes:',
     [''],
     default=['']
 )
@@ -199,14 +179,31 @@ with st.container():
     col1, col2 = st.columns(2)
     
     with col1:
-        st.markdown('#### Os restaurantes que aceitam pedido online são também, na média, osrestaurantes que mais possuem avaliações registradas?')
+        st.markdown('#### Média de avaliações por tipo de entrega')
         comparison_dfx = restaurante_pedido_online_avaliacoes_medias(df1)
-        st.dataframe(comparison_dfx)
+        fig1 = px.bar(comparison_dfx, 
+                     x='Tipo de Entrega', 
+                     y='Média de Avaliações',
+                     title='Média de Avaliações por Tipo de Entrega',
+                     template='plotly_white')
+        st.plotly_chart(fig1, use_container_width=True)
+    
     with col2:
-        st.markdown('#### Os restaurantes que fazem reservas são também, na média, os restaurantes que possuem o maior valor médio de um prato para duas pessoas?')
+        st.markdown('#### Média de preço para duas pessoas por tipo de reserva')
         comparison_df = restaurante_reserva_valor_medio(df1)
-        st.dataframe(comparison_df)
+        fig2 = px.bar(comparison_df, 
+                     x='Tipo de Reserva', 
+                     y='Preço Médio',
+                     title='Preço Médio por Tipo de Reserva',
+                     template='plotly_white')
+        st.plotly_chart(fig2, use_container_width=True)
+
 with st.container():
-    st.markdown('#### Os restaurantes do tipo de culinária japonesa dos Estados Unidos da América possuem um valor médio de prato para duas pessoas maior que as churrascarias americanas (BBQ)?')
+    st.markdown('#### Média de preço por tipo de culinária nos EUA')
     media_total = restaurante_culinaria_japonesa_bbq(df1)
-    st.dataframe(media_total)
+    fig3 = px.bar(media_total, 
+                  x='Tipo de Culinária', 
+                  y='Preço Médio',
+                  title='Preço Médio por Tipo de Culinária nos EUA',
+                  template='plotly_white')
+    st.plotly_chart(fig3, use_container_width=True)
