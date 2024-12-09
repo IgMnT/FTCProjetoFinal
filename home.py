@@ -18,11 +18,11 @@ st.markdown(
     """
     ### 📈 Fome Zero Dashboard
     ### Como usar:
-    - Visão Geral
-    - Visão Cidade
-    - Visão Restaurantes
-    - Visão País
-    - Visão Culinaria
+    - Visão Geral - Fornece uma visão generalizada acerca dos indicadores de países, restaurantes, cidades e culinarias
+    - Visão Cidade - Forenece uma visão detalhada dos dados das cidades
+    - Visão Pais - Fornece uma visão detalhada dos dados dos países
+    - Visão Restaurantes - Fornece uma visão detalhada dos dados dos restaurantes
+    - Visão Culinaria - Fornece uma visão detalhada dos dados das culinarias
     
     """
 )

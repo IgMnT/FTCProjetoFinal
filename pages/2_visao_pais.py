@@ -131,12 +131,13 @@ st.sidebar.markdown('## Filtros')
 
 country = st.sidebar.multiselect(
     'Escolha os países que deseja visualizar os restaurantes:',
-    [''],
-    default=['']
+    list(COUNTRIES.values()),
+    default=list(COUNTRIES.values())
 )
 
-#linhas_selecionadas = df1['country_code'].isin(country)
-#df1 = df1.loc[linhas_selecionadas, :]
+country_code_map = {v: k for k, v in COUNTRIES.items()}
+linhas_selecionadas = df1['country_code'].isin([country_code_map[pais] for pais in country])
+df1 = df1.loc[linhas_selecionadas, :]
 
 
 

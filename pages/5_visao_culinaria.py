@@ -13,10 +13,27 @@ import plotly.express as px
 import folium
 from streamlit_folium import folium_static
 import inflection
+
 #=======================================
 #Funções
 #=======================================
-
+COUNTRIES = {
+1: "India",
+14: "Australia",
+30: "Brazil",
+37: "Canada",
+94: "Indonesia",
+148: "New Zeland",
+162: "Philippines",
+166: "Qatar",
+184: "Singapure",
+189: "South Africa",
+191: "Sri Lanka",
+208: "Turkey",
+214: "United Arab Emirates",
+215: "England",
+216: "United States of America",
+}
 def rename_columns(df):
     df = df.copy()
     
@@ -97,9 +114,14 @@ st.sidebar.markdown('## Filtros')
 
 country = st.sidebar.multiselect(
     'Escolha os países que deseja visualizar os restaurantes:',
-    [''],
-    default=['']
+    list(COUNTRIES.values()),
+    default=list(COUNTRIES.values())
 )
+
+country_code_map = {v: k for k, v in COUNTRIES.items()}
+
+linhas_selecionadas = df1['country_code'].isin([country_code_map[pais] for pais in country])
+df1 = df1.loc[linhas_selecionadas, :]
 
 #=======================================
 #Layout
